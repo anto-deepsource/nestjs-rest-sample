@@ -11,7 +11,7 @@ import {
   Query,
   Res,
   Scope,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { Observable } from 'rxjs';
@@ -30,7 +30,7 @@ import { UpdatePostDto } from './update-post.dto';
 
 @Controller({ path: 'posts', scope: Scope.REQUEST })
 export class PostController {
-  constructor(private postService: PostService) { }
+  constructor(private postService: PostService) {}
 
   @Get('')
   getAllPosts(
@@ -42,7 +42,9 @@ export class PostController {
   }
 
   @Get(':id')
-  getPostById(@Param('id', ParseObjectIdPipe) id: string): Observable<BlogPost> {
+  getPostById(
+    @Param('id', ParseObjectIdPipe) id: string,
+  ): Observable<BlogPost> {
     return this.postService.findById(id);
   }
 
@@ -111,7 +113,9 @@ export class PostController {
   }
 
   @Get(':id/comments')
-  getAllCommentsOfPost(@Param('id', ParseObjectIdPipe) id: string): Observable<Comment[]> {
+  getAllCommentsOfPost(
+    @Param('id', ParseObjectIdPipe) id: string,
+  ): Observable<Comment[]> {
     return this.postService.commentsOf(id);
   }
 }

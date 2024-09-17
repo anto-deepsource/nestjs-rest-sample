@@ -8,19 +8,21 @@ import { AuthenticatedRequest } from './interface/authenticated-request.interfac
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  login(@Req() req: AuthenticatedRequest, @Res() res: Response): Observable<Response> {
-    return this.authService.login(req.user)
-      .pipe(
-        map(token => {
-          return res
-            .header('Authorization', 'Bearer ' + token.access_token)
-            .json(token)
-            .send()
-        })
-      );
+  login(
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response,
+  ): Observable<Response> {
+    return this.authService.login(req.user).pipe(
+      map((token) => {
+        return res
+          .header('Authorization', 'Bearer ' + token.access_token)
+          .json(token)
+          .send();
+      }),
+    );
   }
 }
