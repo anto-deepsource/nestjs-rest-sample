@@ -1,12 +1,12 @@
 # Handling user registration
 
-In the previous posts, the user sample data is initialized in a service which is observing an `OnMoudleInit` event. 
+In the previous posts, the user sample data is initialized in a service which is observing an `OnMoudleInit` event.
 
 In this post we will add an endpoint to handle user registration request, including:
 
-* Add an endpoint */register* to handling user registration progress
-* Hashing password with bcrypt
-* Sending notifications via SendGrid mail service
+- Add an endpoint _/register_ to handling user registration progress
+- Hashing password with bcrypt
+- Sending notifications via SendGrid mail service
 
 ## Registering a new user
 
@@ -15,6 +15,7 @@ Generate a register controller.
 ```bash
 nest g controller user/register --flat
 ```
+
 Fill the following content into the `RegisterController`.
 
 ```typescript
@@ -22,52 +23,51 @@ Fill the following content into the `RegisterController`.
 
 @Controller('register')
 export class RegisterController {
-    constructor(private userService: UserService) { }
+  constructor(private userService: UserService) {}
 
-    @Post()
-    register(
-        @Body() registerDto: RegisterDto,
-        @Res() res: Response): Observable<Response> {
-        const username = registerDto.username;
+  @Post()
+  register(
+    @Body() registerDto: RegisterDto,
+    @Res() res: Response,
+  ): Observable<Response> {
+    const username = registerDto.username;
 
-        return this.userService.existsByUsername(username).pipe(
-            flatMap(exists => {
-                if (exists) {
-                    throw new ConflictException(`username:${username} is existed`)
-                }
-                else {
-                    const email = registerDto.email;
-                    return this.userService.existsByEmail(email).pipe(
-                        flatMap(exists => {
-                            if (exists) {
-                                throw new ConflictException(`email:${email} is existed`)
-                            }
-                            else {
-                                return this.userService.register(registerDto).pipe(
-                                    map(user =>
-                                        res.location('/users/' + user.id)
-                                            .status(201)
-                                            .send()
-                                    )
-                                );
-                            }
-                        })
-                    );
-                }
-            })
-        );
-    }
+    return this.userService.existsByUsername(username).pipe(
+      flatMap((exists) => {
+        if (exists) {
+          throw new ConflictException(`username:${username} is existed`);
+        } else {
+          const email = registerDto.email;
+          return this.userService.existsByEmail(email).pipe(
+            flatMap((exists) => {
+              if (exists) {
+                throw new ConflictException(`email:${email} is existed`);
+              } else {
+                return this.userService.register(registerDto).pipe(
+                  map((user) =>
+                    res
+                      .location('/users/' + user.id)
+                      .status(201)
+                      .send(),
+                  ),
+                );
+              }
+            }),
+          );
+        }
+      }),
+    );
+  }
 }
 ```
 
-In the above codes, we will check  user existence by username and email respectively, then save the user data  into the MongoDB  database.
+In the above codes, we will check user existence by username and email respectively, then save the user data into the MongoDB database.
 
 In the `UserService`, add the missing methods.
 
 ```typescript
 @Injectable()
 export class UserService {
-    
   existsByUsername(username: string): Observable<boolean> {
     return from(this.userModel.exists({ username }));
   }
@@ -77,10 +77,9 @@ export class UserService {
   }
 
   register(data: RegisterDto): Observable<User> {
-
     const created = this.userModel.create({
       ...data,
-      roles: [RoleType.USER]
+      roles: [RoleType.USER],
     });
 
     return from(created);
@@ -94,40 +93,44 @@ Create a DTO class to represent the user registration request data. Generate the
 ```bash
 nest g class user/register.dto --flat
 ```
+
 And fill the following content.
 
 ```typescript
-import { IsEmail, IsNotEmpty, MaxLength, MinLength } from "class-validator";
+import { IsEmail, IsNotEmpty, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterDto {
-    @IsNotEmpty()
-    readonly username: string;
+  @IsNotEmpty()
+  readonly username: string;
 
-    @IsNotEmpty()
-    @IsEmail()
-    readonly email: string;
+  @IsNotEmpty()
+  @IsEmail()
+  readonly email: string;
 
-    @IsNotEmpty()
-    @MinLength(8, { message: " The min length of password is 8 " })
-    @MaxLength(20, { message: " The password can't accept more than 20 characters " })
-    // @Matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,20}$/,
-    //     { message: " A password at least contains one numeric digit, one supercase char and one lowercase char" }
-    // )
-    readonly password: string;
+  @IsNotEmpty()
+  @MinLength(8, { message: ' The min length of password is 8 ' })
+  @MaxLength(20, {
+    message: " The password can't accept more than 20 characters ",
+  })
+  // @Matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,20}$/,
+  //     { message: " A password at least contains one numeric digit, one supercase char and one lowercase char" }
+  // )
+  readonly password: string;
 
-    @IsNotEmpty()
-    readonly firstName?: string;
+  @IsNotEmpty()
+  readonly firstName?: string;
 
-    @IsNotEmpty()
-    readonly lastName?: string;
+  @IsNotEmpty()
+  readonly lastName?: string;
 }
 ```
+
 In the above codes, the `@IsNotEmpty()`,`@IsEmail`, `@MinLength()`, `@MaxLength()`, `@Matches()` are from `class-validator`. If you have some experience of Java EE/Jakarta EE Bean Validation or Hibernate Validators, these annotations are easy to understand.
 
-* `@IsNotEmpty()` to check  if the given value is empty
-* `@IsEmail` to validate if the input string is an valid email format
-* `@MinLength()` and `@MaxLength()`are to limit the length range of the input value
-*  `@Matches()` is flexible for custom RegExp matches.
+- `@IsNotEmpty()` to check if the given value is empty
+- `@IsEmail` to validate if the input string is an valid email format
+- `@MinLength()` and `@MaxLength()`are to limit the length range of the input value
+- `@Matches()` is flexible for custom RegExp matches.
 
 > More info about the usage of class-validator, check the details of project [typestack/class-validator](https://github.com/typestack/class-validator).
 
@@ -153,10 +156,10 @@ describe('Register Controller', () => {
           useValue: {
             register: jest.fn(),
             existsByUsername: jest.fn(),
-            existsByEmail: jest.fn()
+            existsByEmail: jest.fn(),
           },
         },
-      ]
+      ],
     }).compile();
 
     controller = module.get<RegisterController>(RegisterController);
@@ -169,61 +172,91 @@ describe('Register Controller', () => {
 
   describe('register', () => {
     it('should throw ConflictException when username is existed ', async () => {
-      const existsByUsernameSpy = jest.spyOn(service, 'existsByUsername').mockReturnValue(of(true));
-      const existsByEmailSpy = jest.spyOn(service, 'existsByEmail').mockReturnValue(of(true));
-      const saveSpy = jest.spyOn(service, 'register').mockReturnValue(of({} as User));
+      const existsByUsernameSpy = jest
+        .spyOn(service, 'existsByUsername')
+        .mockReturnValue(of(true));
+      const existsByEmailSpy = jest
+        .spyOn(service, 'existsByEmail')
+        .mockReturnValue(of(true));
+      const saveSpy = jest
+        .spyOn(service, 'register')
+        .mockReturnValue(of({} as User));
 
       const responseMock = {
         location: jest.fn().mockReturnThis(),
         json: jest.fn().mockReturnThis(),
-        send: jest.fn().mockReturnThis()
+        send: jest.fn().mockReturnThis(),
       } as any;
       try {
-        await controller.register({ username: 'hantsy' } as RegisterDto, responseMock).toPromise();
+        await controller
+          .register({ username: 'hantsy' } as RegisterDto, responseMock)
+          .toPromise();
       } catch (e) {
         expect(e).toBeDefined();
         expect(existsByUsernameSpy).toBeCalledWith('hantsy');
         expect(existsByEmailSpy).toBeCalledTimes(0);
-        expect(saveSpy).toBeCalledTimes(0)
+        expect(saveSpy).toBeCalledTimes(0);
       }
     });
 
     it('should throw ConflictException when email is existed ', async () => {
-      const existsByUsernameSpy = jest.spyOn(service, 'existsByUsername').mockReturnValue(of(false));
-      const existsByEmailSpy = jest.spyOn(service, 'existsByEmail').mockReturnValue(of(true));
-      const saveSpy = jest.spyOn(service, 'register').mockReturnValue(of({} as User));
+      const existsByUsernameSpy = jest
+        .spyOn(service, 'existsByUsername')
+        .mockReturnValue(of(false));
+      const existsByEmailSpy = jest
+        .spyOn(service, 'existsByEmail')
+        .mockReturnValue(of(true));
+      const saveSpy = jest
+        .spyOn(service, 'register')
+        .mockReturnValue(of({} as User));
 
       const responseMock = {
         location: jest.fn().mockReturnThis(),
         json: jest.fn().mockReturnThis(),
-        send: jest.fn().mockReturnThis()
+        send: jest.fn().mockReturnThis(),
       } as any;
       try {
-        await controller.register({ username: 'hantsy', email: 'hantsy@example.com' } as RegisterDto, responseMock).toPromise();
+        await controller
+          .register(
+            { username: 'hantsy', email: 'hantsy@example.com' } as RegisterDto,
+            responseMock,
+          )
+          .toPromise();
       } catch (e) {
         expect(e).toBeDefined();
         expect(existsByUsernameSpy).toBeCalledWith('hantsy');
         expect(existsByEmailSpy).toBeCalledWith('hantsy@example.com');
-        expect(saveSpy).toBeCalledTimes(0)
+        expect(saveSpy).toBeCalledTimes(0);
       }
     });
 
     it('should save when username and email are available ', async () => {
-      const existsByUsernameSpy = jest.spyOn(service, 'existsByUsername').mockReturnValue(of(false));
-      const existsByEmailSpy = jest.spyOn(service, 'existsByEmail').mockReturnValue(of(false));
-      const saveSpy = jest.spyOn(service, 'register').mockReturnValue(of({ _id: '123' } as User));
+      const existsByUsernameSpy = jest
+        .spyOn(service, 'existsByUsername')
+        .mockReturnValue(of(false));
+      const existsByEmailSpy = jest
+        .spyOn(service, 'existsByEmail')
+        .mockReturnValue(of(false));
+      const saveSpy = jest
+        .spyOn(service, 'register')
+        .mockReturnValue(of({ _id: '123' } as User));
 
       const responseMock = {
         location: jest.fn().mockReturnThis(),
         status: jest.fn().mockReturnThis(),
-        send: jest.fn().mockReturnThis()
+        send: jest.fn().mockReturnThis(),
       } as any;
 
       const locationSpy = jest.spyOn(responseMock, 'location');
       const statusSpy = jest.spyOn(responseMock, 'status');
       const sendSpy = jest.spyOn(responseMock, 'send');
 
-      await controller.register({ username: 'hantsy', email: 'hantsy@example.com' } as RegisterDto, responseMock).toPromise();
+      await controller
+        .register(
+          { username: 'hantsy', email: 'hantsy@example.com' } as RegisterDto,
+          responseMock,
+        )
+        .toPromise();
 
       expect(existsByUsernameSpy).toBeCalledWith('hantsy');
       expect(existsByEmailSpy).toBeCalledWith('hantsy@example.com');
@@ -231,7 +264,6 @@ describe('Register Controller', () => {
       expect(locationSpy).toBeCalled();
       expect(statusSpy).toBeCalled();
       expect(sendSpy).toBeCalled();
-
     });
   });
 });
@@ -239,13 +271,13 @@ describe('Register Controller', () => {
 
 In the above testing codes, we go through all conditions and make sure all code blocks in the `RegisterController` are hit.
 
-Correspondingly add tests for the newly added methods in `UserService` .  Here I skip the testing codes here, please check the [source code](https://github.com/hantsy/nestjs-sample/tree/feat/user) yourself.
+Correspondingly add tests for the newly added methods in `UserService` . Here I skip the testing codes here, please check the [source code](https://github.com/hantsy/nestjs-sample/tree/feat/user) yourself.
 
-## Hashing password 
+## Hashing password
 
 In the former posts, we used plain text to store the password field in user document. In a real world application, we should choose a hash algorithm to encode the plain password for security consideration.
 
-Bcrypt is very popular for hashing password. 
+Bcrypt is very popular for hashing password.
 
 Install `bcypt` firstly.
 
@@ -257,7 +289,6 @@ When saving a new user, hashing the password then save it. Add a pre save hook i
 
 ```typescript
 async function preSaveHook(next) {
-
   // Only run this function if password was modified
   if (!this.isModified('password')) return next();
 
@@ -299,35 +330,35 @@ flatMap((user) => {
     }))
 ```
 
-It is a little difficult to test the hooks of  the `User` model, to simplify the testing work,  here I  extract the  hooks to standalone functions, and mock the calling context in the tests.
+It is a little difficult to test the hooks of the `User` model, to simplify the testing work, here I extract the hooks to standalone functions, and mock the calling context in the tests.
 
 ```typescript
 // see: https://stackoverflow.com/questions/58701700/how-do-i-test-if-statement-inside-my-mongoose-pre-save-hook
 describe('preSaveHook', () => {
-    test('should execute next middleware when password is not modified', async () => {
-        const nextMock = jest.fn();
-        const contextMock = {
-            isModified: jest.fn()
-        };
-        contextMock.isModified.mockReturnValueOnce(false);
-        await preSaveHook.call(contextMock, nextMock);
-        expect(contextMock.isModified).toBeCalledWith('password');
-        expect(nextMock).toBeCalledTimes(1);
-    });
+  test('should execute next middleware when password is not modified', async () => {
+    const nextMock = jest.fn();
+    const contextMock = {
+      isModified: jest.fn(),
+    };
+    contextMock.isModified.mockReturnValueOnce(false);
+    await preSaveHook.call(contextMock, nextMock);
+    expect(contextMock.isModified).toBeCalledWith('password');
+    expect(nextMock).toBeCalledTimes(1);
+  });
 
-    test('should set password when password is modified', async () => {
-        const nextMock = jest.fn();
-        const contextMock = {
-            isModified: jest.fn(),
-            set: jest.fn(),
-            password: '123456'
-        };
-        contextMock.isModified.mockReturnValueOnce(true);
-        await preSaveHook.call(contextMock, nextMock);
-        expect(contextMock.isModified).toBeCalledWith('password');
-        expect(nextMock).toBeCalledTimes(1);
-        expect(contextMock.set).toBeCalledTimes(1);
-    });
+  test('should set password when password is modified', async () => {
+    const nextMock = jest.fn();
+    const contextMock = {
+      isModified: jest.fn(),
+      set: jest.fn(),
+      password: '123456',
+    };
+    contextMock.isModified.mockReturnValueOnce(true);
+    await preSaveHook.call(contextMock, nextMock);
+    expect(contextMock.isModified).toBeCalledWith('password');
+    expect(nextMock).toBeCalledTimes(1);
+    expect(contextMock.set).toBeCalledTimes(1);
+  });
 });
 ```
 
@@ -365,7 +396,7 @@ Now run the application, have a look at the log in the console about the user in
 
 Generally, in a real world application, a welcome email should be sent to the new registered user when the registration is completed successfully.
 
-There are several modules can be used to send emails in NodeJS applications, for example, `nodemailer` etc.  There are also some cloud service for emails, such as [SendGrid](https://sendgrid.com/). There is an existing Nestjs module to integrate SendGrid to Nestjs, check [ntegral/nestjs-sendgrid](https://github.com/ntegral/nestjs-sendgrid) project.
+There are several modules can be used to send emails in NodeJS applications, for example, `nodemailer` etc. There are also some cloud service for emails, such as [SendGrid](https://sendgrid.com/). There is an existing Nestjs module to integrate SendGrid to Nestjs, check [ntegral/nestjs-sendgrid](https://github.com/ntegral/nestjs-sendgrid) project.
 
 In this sample, we will not use the existing one, and create a new home-use module for this application.
 
@@ -375,7 +406,7 @@ Install sendgrid npm package firstly.
 npm i @sendgrid/mail
 ```
 
-Generate a sendgrid module and a sendgrid service. 
+Generate a sendgrid module and a sendgrid service.
 
 ```bash
 nest g mo sendgrid
@@ -387,14 +418,12 @@ Add the following content into the `SendgridService`.
 ```typescript
 @Injectable()
 export class SendgridService {
+  constructor(@Inject(SENDGRID_MAIL) private mailService: MailService) {}
 
-    constructor(@Inject(SENDGRID_MAIL) private mailService: MailService) { }
-
-    send(data: MailDataRequired): Observable<any>{
-        //console.log(this.mailService)
-        return from(this.mailService.send(data, false))
-    }
-
+  send(data: MailDataRequired): Observable<any> {
+    //console.log(this.mailService)
+    return from(this.mailService.send(data, false));
+  }
 }
 ```
 
@@ -402,20 +431,18 @@ Create a provider to expose the `MailService` from `@sendgrid/mail` package.
 
 ```typescript
 export const sendgridProviders = [
-    {
-      provide: SENDGRID_MAIL,
-      useFactory: (config: ConfigType<typeof sendgridConfig>): MailService =>
-        {
-            const mail = new MailService();
-            mail.setApiKey(config.apiKey);
-            mail.setTimeout(5000);
-            //mail.setTwilioEmailAuth(username, password)
-            return mail;
-        },
-      inject: [sendgridConfig.KEY],
-    }
-  ];
-
+  {
+    provide: SENDGRID_MAIL,
+    useFactory: (config: ConfigType<typeof sendgridConfig>): MailService => {
+      const mail = new MailService();
+      mail.setApiKey(config.apiKey);
+      mail.setTimeout(5000);
+      //mail.setTwilioEmailAuth(username, password)
+      return mail;
+    },
+    inject: [sendgridConfig.KEY],
+  },
+];
 ```
 
 Accordingly, add a config for sendgrid.
@@ -429,45 +456,43 @@ export default registerAs('sendgrid', () => ({
 
 > Signup SendGrid and generate an API Key for your applications to send emails.
 
-Declares  sendgrid related config, provider and service in `SendgridModule`.
+Declares sendgrid related config, provider and service in `SendgridModule`.
 
 ```typescript
 @Module({
   imports: [ConfigModule.forFeature(sendgridConfig)],
   providers: [...sendgridProviders, SendgridService],
-  exports: [...sendgridProviders, SendgridService]
+  exports: [...sendgridProviders, SendgridService],
 })
-export class SendgridModule { }
+export class SendgridModule {}
 ```
 
 Change the register function in the `UserService`.
 
 ```typescript
-
-    const msg = {
-      from: 'hantsy@gmail.com', // Use the email address or domain you verified above
-      subject: 'Welcome to Nestjs Sample',
-      templateId: "d-cc6080999ac04a558d632acf2d5d0b7a",
-      personalizations: [
-        {
-          to: data.email,
-          dynamicTemplateData: { name: data.firstName + ' ' + data.lastName },
-        }
-      ]
-
-    };
-    return this.sendgridService.send(msg).pipe(
-      catchError(err=>of(`sending email failed:${err}`)),
-      tap(data => console.log(data)),
-      flatMap(data => from(created)),
-    );
+const msg = {
+  from: 'hantsy@gmail.com', // Use the email address or domain you verified above
+  subject: 'Welcome to Nestjs Sample',
+  templateId: 'd-cc6080999ac04a558d632acf2d5d0b7a',
+  personalizations: [
+    {
+      to: data.email,
+      dynamicTemplateData: { name: data.firstName + ' ' + data.lastName },
+    },
+  ],
+};
+return this.sendgridService.send(msg).pipe(
+  catchError((err) => of(`sending email failed:${err}`)),
+  tap((data) => console.log(data)),
+  flatMap((data) => from(created)),
+);
 ```
->The templateId is the id of the templates managed by SendGrid. SendGrid has great web UI for you to compose and manage email templates.
 
-Ideally, a user registration progress should be split into two steps.  
+> The templateId is the id of the templates managed by SendGrid. SendGrid has great web UI for you to compose and manage email templates.
 
-* Validate the user input data from the registration form, and persist it into the MongoDB, then send a verification number to verify the registered phone number, email, etc.  In this stage, the user account will be suspended to verify.
-* The registered user receive the verification number or links in emails, provide it in the verification page or click the link in the email directly, and get verified. In this stage, the user account will be activated.
+Ideally, a user registration progress should be split into two steps.
+
+- Validate the user input data from the registration form, and persist it into the MongoDB, then send a verification number to verify the registered phone number, email, etc. In this stage, the user account will be suspended to verify.
+- The registered user receive the verification number or links in emails, provide it in the verification page or click the link in the email directly, and get verified. In this stage, the user account will be activated.
 
 Grab [the source codes from my github](https://github.com/hantsy/nestjs-sample), switch to branch [feat/user](https://github.com/hantsy/nestjs-sample/blob/feat/user).
-

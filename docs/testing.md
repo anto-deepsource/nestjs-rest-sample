@@ -1,10 +1,10 @@
 # Testing Nestjs applications
 
-In the previous posts,  I have write a lot of testing codes to verify if  our application is working as expected.
+In the previous posts, I have write a lot of testing codes to verify if our application is working as expected.
 
-Nestjs provides integration with with [Jest](https://github.com/facebook/jest) and [Supertest](https://github.com/visionmedia/supertest) out-of-the-box, and testing harness for unit testing and  end-to-end (e2e) test.
+Nestjs provides integration with with [Jest](https://github.com/facebook/jest) and [Supertest](https://github.com/visionmedia/supertest) out-of-the-box, and testing harness for unit testing and end-to-end (e2e) test.
 
-##  Nestjs test harness
+## Nestjs test harness
 
 Like the Angular 's `TestBed`, Nestjs provide a similar `Test` facilities to assemble the Nestjs components for your testing codes.
 
@@ -25,9 +25,9 @@ Similar to the attributes in the `@Module` decorator, `creatTestingModule` defin
 
 We have demonstrated the methods to test a service in Nestjs applications, eg. in the `post.service.spec.ts`.
 
-To isolate the dependencies in a service,  there are several approaches.
+To isolate the dependencies in a service, there are several approaches.
 
-* Create a fake service to replace the real service, assemble it in the `providers` .
+- Create a fake service to replace the real service, assemble it in the `providers` .
 
   ```typescript
   providers: [
@@ -38,7 +38,7 @@ To isolate the dependencies in a service,  there are several approaches.
   ],
   ```
 
-* Use a mock instance instead.
+- Use a mock instance instead.
 
   ```type
   providers: [
@@ -49,15 +49,16 @@ To isolate the dependencies in a service,  there are several approaches.
   ],
   ```
 
-* For simple service providers, you can escape from the Nestjs harness, and create a simple fake dependent service, and use `new` to instantize your service in the  `setup` hooks.
+- For simple service providers, you can escape from the Nestjs harness, and create a simple fake dependent service, and use `new` to instantize your service in the `setup` hooks.
 
 You can also import a module in `Test.createTestingModule`.
 
 ```typescript
 Test.createTestingModule({
-        imports: []
-       })
+  imports: [],
+});
 ```
+
 To replace some service in the imported modules, you can `override` it.
 
 ```typescript
@@ -69,46 +70,47 @@ Test.createTestingModule({
 
 ## Jest Tips and Tricks
 
-Nestjs testing is heavily dependent on Jest framework.  I have spent a lot of time to research testing all components in Nestjs applications.
+Nestjs testing is heavily dependent on Jest framework. I have spent a lot of time to research testing all components in Nestjs applications.
 
 ### Mocking external classes or functions
 
-For example the  `mongoose.connect` will require a real mongo server to connect, to mock the `createConnection` of `mongoose`.
+For example the `mongoose.connect` will require a real mongo server to connect, to mock the `createConnection` of `mongoose`.
 
 Set up mocks before importing it.
 
 ```typescript
 jest.mock('mongoose', () => ({
-    createConnection: jest.fn().mockImplementation(
-        (uri:any, options:any)=>({} as any)
-    ),
-    Connection: jest.fn()
-}))
+  createConnection: jest
+    .fn()
+    .mockImplementation((uri: any, options: any) => ({}) as any),
+  Connection: jest.fn(),
+}));
 
 //...
 import { Connection, createConnection } from 'mongoose';
 //
 ```
+
 When a database provider is instantized, assert the `createConnection` is called.
 
 ```typescript
 it('connect is called', () => {
-    //expect(conn).toBeDefined();
-    //expect(createConnection).toHaveBeenCalledTimes(1); // it is 2 here. why?
-    expect(createConnection).toHaveBeenCalledWith("mongodb://localhost/blog", {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        //see: https://mongoosejs.com/docs/deprecations.html#findandmodify
-        useFindAndModify: false
-    });
-})
+  //expect(conn).toBeDefined();
+  //expect(createConnection).toHaveBeenCalledTimes(1); // it is 2 here. why?
+  expect(createConnection).toHaveBeenCalledWith('mongodb://localhost/blog', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    //see: https://mongoosejs.com/docs/deprecations.html#findandmodify
+    useFindAndModify: false,
+  });
+});
 ```
 
- ### Mock parent classes through prototype
+### Mock parent classes through prototype
 
 Have a look at the local auth guard tests.
 
-Mock the method `canActivate` in the parent  prototype.
+Mock the method `canActivate` in the parent prototype.
 
 ```typescript
 describe('LocalAuthGuard', () => {
@@ -126,11 +128,8 @@ describe('LocalAuthGuard', () => {
     AuthGuard('local').prototype.logIn = jest.fn(() => Promise.resolve());
     expect(await guard.canActivate({} as ExecutionContext)).toBe(true);
   });
-
 });
 ```
-
-
 
 ### Extract the functionality into functions as possible
 
@@ -138,7 +137,6 @@ Let's have a look at the `user.model.ts`. Extract the pre `save` hook method and
 
 ```typescript
 async function preSaveHook(next) {
-
   // Only run this function if password was modified
   if (!this.isModified('password')) return next();
 
@@ -162,40 +160,38 @@ It is easy to test them like simple functions.
 
 ```typescript
 describe('preSaveHook', () => {
-    test('should execute next middleware when password is not modified', async () => {
-        const nextMock = jest.fn();
-        const contextMock = {
-            isModified: jest.fn()
-        };
-        contextMock.isModified.mockReturnValueOnce(false);
-        await preSaveHook.call(contextMock, nextMock);
-        expect(contextMock.isModified).toBeCalledWith('password');
-        expect(nextMock).toBeCalledTimes(1);
-    });
+  test('should execute next middleware when password is not modified', async () => {
+    const nextMock = jest.fn();
+    const contextMock = {
+      isModified: jest.fn(),
+    };
+    contextMock.isModified.mockReturnValueOnce(false);
+    await preSaveHook.call(contextMock, nextMock);
+    expect(contextMock.isModified).toBeCalledWith('password');
+    expect(nextMock).toBeCalledTimes(1);
+  });
 
-    test('should set password when password is modified', async () => {
-        const nextMock = jest.fn();
-        const contextMock = {
-            isModified: jest.fn(),
-            set: jest.fn(),
-            password: '123456'
-        };
-        contextMock.isModified.mockReturnValueOnce(true);
-        await preSaveHook.call(contextMock, nextMock);
-        expect(contextMock.isModified).toBeCalledWith('password');
-        expect(nextMock).toBeCalledTimes(1);
-        expect(contextMock.set).toBeCalledTimes(1);
-    });
+  test('should set password when password is modified', async () => {
+    const nextMock = jest.fn();
+    const contextMock = {
+      isModified: jest.fn(),
+      set: jest.fn(),
+      password: '123456',
+    };
+    contextMock.isModified.mockReturnValueOnce(true);
+    await preSaveHook.call(contextMock, nextMock);
+    expect(contextMock.isModified).toBeCalledWith('password');
+    expect(nextMock).toBeCalledTimes(1);
+    expect(contextMock.set).toBeCalledTimes(1);
+  });
 });
 ```
-
-
 
 ## End-to-end testing
 
 Nestjs integrates supertest to send a request to the server side.
 
-Use `beforeAll` and `afterAll` to start and stop the application,  use `request` to send a http request to the server and assert the response result.
+Use `beforeAll` and `afterAll` to start and stop the application, use `request` to send a http request to the server and assert the response result.
 
 ```typescript
 import * as request from 'supertest';
