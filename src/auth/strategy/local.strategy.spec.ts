@@ -17,7 +17,7 @@ describe('LocalStrategy', () => {
           useValue: {
             constructor: jest.fn(),
             login: jest.fn(),
-            validateUser: jest.fn()
+            validateUser: jest.fn(),
           },
         },
       ],
@@ -55,7 +55,7 @@ describe('LocalStrategy', () => {
         const user = await strategy.validate('test', 'pass');
       } catch (e) {
         //console.log(e)
-        expect(e).toBeDefined()
+        expect(e).toBeDefined();
       }
       expect(authService.validateUser).toBeCalledWith('test', 'pass');
     });
@@ -83,5 +83,5 @@ describe('LocalStrategy(call supper)', () => {
       usernameField: 'username',
       passwordField: 'password',
     });
-  })
+  });
 });

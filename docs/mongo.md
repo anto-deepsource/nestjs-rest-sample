@@ -1,18 +1,16 @@
 # Connecting to MongoDB
 
-In the last post , we created a RESTful API application for simple CRUD functionalities.  In this post, we will enrich it: 
+In the last post , we created a RESTful API application for simple CRUD functionalities. In this post, we will enrich it:
 
-*  Adding MongoDB support via Mongoose module
-* Changing dummy data storage to use MongoDB server
-* Cleaning up the testing codes 
+- Adding MongoDB support via Mongoose module
+- Changing dummy data storage to use MongoDB server
+- Cleaning up the testing codes
 
 Let's go.
 
-
-
 ## Adding MongooseModule
 
-[MongoDB](https://www.mongodb.com) is  a leading document-based NoSQL database.  Nestjs has official support for MongoDB via  its [Mongoosejs](https://mongoosejs.com/) integration. 
+[MongoDB](https://www.mongodb.com) is a leading document-based NoSQL database. Nestjs has official support for MongoDB via its [Mongoosejs](https://mongoosejs.com/) integration.
 
 Firstly, install the following dependencies.
 
@@ -21,7 +19,7 @@ npm install --save @nestjs/mongoose mongoose
 npm install --save-dev @types/mongoose
 ```
 
-Declare  a `MongooseModule ` in the top-level `AppModule` to activate Mongoose support.
+Declare a `MongooseModule ` in the top-level `AppModule` to activate Mongoose support.
 
 ```typescript
 //... other imports
@@ -29,18 +27,18 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
-      //...other modules imports
-      // add MongooseModule
-      MongooseModule.forRoot('mongodb://localhost/blog')
+    //...other modules imports
+    // add MongooseModule
+    MongooseModule.forRoot('mongodb://localhost/blog'),
   ],
   //... providers, controllers
 })
 export class AppModule {}
 ```
 
-Mongoose requires a Schema definition to describe every document in MongoDB. Nestjs provides a simple to combine the schema definition and document POJO in the same form. 
+Mongoose requires a Schema definition to describe every document in MongoDB. Nestjs provides a simple to combine the schema definition and document POJO in the same form.
 
-Rename our former *post.interface.ts* to *post.model.ts*, the *.model* suffix means it is a Mongoose managed `Model`.
+Rename our former _post.interface.ts_ to _post.model.ts_, the _.model_ suffix means it is a Mongoose managed `Model`.
 
 ```typescript
 import { SchemaFactory, Schema, Prop } from '@nestjs/mongoose';
@@ -65,7 +63,7 @@ export const PostSchema = SchemaFactory.createForClass(Post);
 
 The annotations `@Schema`, `@Prop` defines the schema definitions on the document class instead of a [mongoose Schema](https://mongoosejs.com/docs/guide.html#definition) function.
 
-Open `PostModule`,  declare a `posts` collection for storing `Post` document via importing a `MongooseModule.forFeature`.
+Open `PostModule`, declare a `posts` collection for storing `Post` document via importing a `MongooseModule.forFeature`.
 
 ```
 import { PostSchema } from './post.model';
@@ -78,13 +76,11 @@ import { PostSchema } from './post.model';
 export class PostModule {}
 ```
 
-
-
-## Refactoring PostService 
+## Refactoring PostService
 
 When a Mongoose schema (eg. `PostSchame`) is mapped to a document collection(eg. `posts`), a Mongoose `Model` is ready for the operations of this collections in MongoDB.
 
-Open *post.service.ts* file.
+Open _post.service.ts_ file.
 
 Change the content to the following:
 
@@ -103,13 +99,7 @@ export class PostService {
           .exec(),
       );
     } else {
-      return from(
-        this.postModel
-          .find({})
-          .skip(skip)
-          .limit(limit)
-          .exec(),
-      );
+      return from(this.postModel.find({}).skip(skip).limit(limit).exec());
     }
   }
 
@@ -134,16 +124,15 @@ export class PostService {
     return from(this.postModel.deleteMany({}).exec());
   }
 }
-
 ```
 
 In the constructor of `PostService` class, use a `@InjectMock('posts')` to bind the `posts` collection to a parameterized Model handler.
 
 The usage of all mongoose related functions can be found in [the official Mongoose docs](https://mongoosejs.com/docs/api/query.html).
 
-As you see,  we also add two classes  `CreatePostDto` and `UpdatePostDto` instead of the original `Post` for the case of creating and updating posts. 
+As you see, we also add two classes `CreatePostDto` and `UpdatePostDto` instead of the original `Post` for the case of creating and updating posts.
 
-Following the principle [separation of concerns](https://en.wikipedia.org/wiki/Separation_of_concerns), `CreatePostDto` and `UpdatePostDto` are only used for transform data from client, add `readonly` modifier to keep the data *immutable* in the transforming progress. 
+Following the principle [separation of concerns](https://en.wikipedia.org/wiki/Separation_of_concerns), `CreatePostDto` and `UpdatePostDto` are only used for transform data from client, add `readonly` modifier to keep the data _immutable_ in the transforming progress.
 
 ```typescript
 // create-post.dto.ts
@@ -201,31 +190,30 @@ export class PostController {
 }
 ```
 
->  Unluckily, Mongoose APIs has no built-in Rxjs's `Observable`  support, if you are stick on Rxjs, you have to use `from` to wrap an existing `Promise` to Rxjs's `Observable`.  Check [this topic on stackoverflow to know more details about the difference bwteen Promise and Observable](https://stackoverflow.com/questions/37364973/what-is-the-difference-between-promises-and-observables).
+> Unluckily, Mongoose APIs has no built-in Rxjs's `Observable` support, if you are stick on Rxjs, you have to use `from` to wrap an existing `Promise` to Rxjs's `Observable`. Check [this topic on stackoverflow to know more details about the difference bwteen Promise and Observable](https://stackoverflow.com/questions/37364973/what-is-the-difference-between-promises-and-observables).
 
 ## Run the application
 
-To run the application, a  running MongoDB server is required. You can download a copy from [MongoDB](https://www.mongodb.com), and follow the [installation guide](https://docs.mongodb.com/manual/installation/) to install it into your system.
+To run the application, a running MongoDB server is required. You can download a copy from [MongoDB](https://www.mongodb.com), and follow the [installation guide](https://docs.mongodb.com/manual/installation/) to install it into your system.
 
-Simply, prepare a *docker-compose.yaml* to run the dependent servers in the development stage.
+Simply, prepare a _docker-compose.yaml_ to run the dependent servers in the development stage.
 
 ```yaml
 version: '3.8' # specify docker-compose version
 
 # Define the services/containers to be run
 services:
-        
-  mongodb: 
-    image: mongo 
+  mongodb:
+    image: mongo
     volumes:
       - mongodata:/data/db
     ports:
-      - "27017:27017"
+      - '27017:27017'
     networks:
-      - backend   
-     
+      - backend
+
 volumes:
-  mongodata:  
+  mongodata:
 
 networks:
   backend:
@@ -242,6 +230,7 @@ Execute the following command in the project root folder to start up the applica
 ```bash
 npm run start
 ```
+
 Now open your terminal and use `curl` to test the endpoints, and make sure it works as expected.
 
 ```bash
@@ -271,19 +260,19 @@ export class DataInitializerService implements OnModuleInit, OnModuleDestroy {
 
   constructor(private postService: PostService) {}
   onModuleInit(): void {
-    this.data.forEach(d => {
-      this.postService.save(d).subscribe(saved => console.log(saved));
+    this.data.forEach((d) => {
+      this.postService.save(d).subscribe((saved) => console.log(saved));
     });
   }
   onModuleDestroy(): void {
     console.log('module is be destroying...');
     this.postService
       .deleteAll()
-      .subscribe(del => console.log(`deleted ${del} records.`));
+      .subscribe((del) => console.log(`deleted ${del} records.`));
   }
-
 }
 ```
+
 Register it in `PostModule`.
 
 ```typescript
@@ -292,12 +281,15 @@ import { DataInitializerService } from './data-initializer.service';
 
 @Module({
   //imports, controllers...
-  providers: [//other services... 
-  DataInitializerService],
+  providers: [
+    //other services...
+    DataInitializerService,
+  ],
 })
 export class PostModule {}
 ```
-Run the application again. Now you will see some data when hinting *http://localhost:3000/posts/*.
+
+Run the application again. Now you will see some data when hinting _http://localhost:3000/posts/_.
 
 ```bash
 >curl http://localhost:3000/posts/
@@ -324,9 +316,9 @@ Run the application again. Now you will see some data when hinting *http://local
 
 ## Clean the testing codes
 
-When switching to real data storage instead of the dummy array,  we face the first issue is how to treat with the Mongo database dependency in our *post.service.spec.ts*. 
+When switching to real data storage instead of the dummy array, we face the first issue is how to treat with the Mongo database dependency in our _post.service.spec.ts_.
 
-Jest provides comprehensive mocking features to isolate the dependencies in test cases. Let's have a look at the whole content of  the refactored *post.service.spec.ts* file.
+Jest provides comprehensive mocking features to isolate the dependencies in test cases. Let's have a look at the whole content of the refactored _post.service.spec.ts_ file.
 
 ```typescript
 describe('PostService', () => {
@@ -393,7 +385,7 @@ describe('PostService', () => {
     expect(data.length).toBe(3);
   });
 
-  it('getPostById with existing id should return 1 post', done => {
+  it('getPostById with existing id should return 1 post', (done) => {
     const found = {
       _id: '5ee49c3115a4e75254bb732e',
       title: 'Generate a NestJS project',
@@ -405,11 +397,11 @@ describe('PostService', () => {
     } as any);
 
     service.findById('1').subscribe({
-      next: data => {
+      next: (data) => {
         expect(data._id).toBe('5ee49c3115a4e75254bb732e');
         expect(data.title).toEqual('Generate a NestJS project');
       },
-      error: error => console.log(error),
+      error: (error) => console.log(error),
       complete: done(),
     });
   });
@@ -433,7 +425,7 @@ describe('PostService', () => {
     expect(model.create).toBeCalledTimes(1);
   });
 
-  it('should update post', done => {
+  it('should update post', (done) => {
     const toUpdated = {
       _id: '5ee49c3115a4e75254bb732e',
       title: 'test title',
@@ -445,15 +437,15 @@ describe('PostService', () => {
     } as any);
 
     service.update('5ee49c3115a4e75254bb732e', toUpdated).subscribe({
-      next: data => {
+      next: (data) => {
         expect(data._id).toBe('5ee49c3115a4e75254bb732e');
       },
-      error: error => console.log(error),
+      error: (error) => console.log(error),
       complete: done(),
     });
   });
 
-  it('should delete post', done => {
+  it('should delete post', (done) => {
     jest.spyOn(model, 'findOneAndDelete').mockReturnValue({
       exec: jest.fn().mockResolvedValueOnce({
         deletedCount: 1,
@@ -461,28 +453,27 @@ describe('PostService', () => {
     } as any);
 
     service.deleteById('anystring').subscribe({
-      next: data => expect(data).toBeTruthy,
-      error: error => console.log(error),
+      next: (data) => expect(data).toBeTruthy,
+      error: (error) => console.log(error),
       complete: done(),
     });
   });
 });
-
 ```
 
 In the above codes,
 
-*  Use a custom *Provider* to provide a `PostModel` dependency for `PostService`, the Model is provided in `useValue` which hosted a mocked object instance for PostModel at runtime.
-* In every test case, use `jest.spyOn` to assume some mocked behaviors of PostModel  happened before the service is executed.
-*  You can use the `toBeCalledWith` like assertions on mocked object or spied object.
+- Use a custom _Provider_ to provide a `PostModel` dependency for `PostService`, the Model is provided in `useValue` which hosted a mocked object instance for PostModel at runtime.
+- In every test case, use `jest.spyOn` to assume some mocked behaviors of PostModel happened before the service is executed.
+- You can use the `toBeCalledWith` like assertions on mocked object or spied object.
 
-> For me, most of time working as a Java/Spring developers, constructing such a simple Jest based test is not easy, [jmcdo29/testing-nestjs](https://github.com/jmcdo29/testing-nestjs) is very helpful for me to jump into jest testing work.  
+> For me, most of time working as a Java/Spring developers, constructing such a simple Jest based test is not easy, [jmcdo29/testing-nestjs](https://github.com/jmcdo29/testing-nestjs) is very helpful for me to jump into jest testing work.
 >
 > The jest mock is every different from Mockito in Java. Luckily there is a ts-mockito which port Mockito to the Typescript world, check [this link](https://github.com/NagRock/ts-mockito) for more details .
 
-OK, let's move to *post.controller.spec.ts*.
+OK, let's move to _post.controller.spec.ts_.
 
-Similarly,   `PostController` depends on `PostService`.  To test the functionalities of `PostController`,  we should mock it.
+Similarly, `PostController` depends on `PostService`. To test the functionalities of `PostController`, we should mock it.
 
 Like the method we used in `post.service.spec.ts`, we can mock it in a `Provider`.
 
@@ -528,7 +519,7 @@ describe('Post Controller(useValue jest mocking)', () => {
 });
 ```
 
-Instead of the jest mocking,  you can use a dummy implementation directly in the `Provider`.
+Instead of the jest mocking, you can use a dummy implementation directly in the `Provider`.
 
 ```typescript
 describe('Post Controller(useValue fake object)', () => {
@@ -630,8 +621,8 @@ describe('Post Controller', () => {
     expect(posts.length).toBe(3);
   });
 
-  it('GET on /posts/1 should return one post ', done => {
-    controller.getPostById('1').subscribe(data => {
+  it('GET on /posts/1 should return one post ', (done) => {
+    controller.getPostById('1').subscribe((data) => {
       expect(data._id).toEqual('1');
       done();
     });
@@ -646,20 +637,20 @@ describe('Post Controller', () => {
     expect(saved.title).toEqual('test title');
   });
 
-  it('PUT on /posts/1 should return all posts', done => {
+  it('PUT on /posts/1 should return all posts', (done) => {
     const post: UpdatePostDto = {
       title: 'test title',
       content: 'test content',
     };
-    controller.updatePost('1', post).subscribe(data => {
+    controller.updatePost('1', post).subscribe((data) => {
       expect(data.title).toEqual('test title');
       expect(data.content).toEqual('test content');
       done();
     });
   });
 
-  it('DELETE on /posts/1 should return true', done => {
-    controller.deletePostById('1').subscribe(data => {
+  it('DELETE on /posts/1 should return true', (done) => {
+    controller.deletePostById('1').subscribe((data) => {
       expect(data).toBeTruthy();
       done();
     });
@@ -667,15 +658,16 @@ describe('Post Controller', () => {
 });
 ```
 
-The above codes are more close the ones in the first article, it is simple and easy to understand.  
+The above codes are more close the ones in the first article, it is simple and easy to understand.
 
 > To ensure the fake PostService has the exact method signature of the real PostService, it is better to use an interface to define the methods if you prefer this apporach.
 
-I have mentioned *ts-mockito*, for me it is easier to boost up a Mockito like test.
+I have mentioned _ts-mockito_, for me it is easier to boost up a Mockito like test.
 
 ```bash
 npm install --save-dev ts-mockito
 ```
+
 A simple mockito based test looks like this.
 
 ```typescript
@@ -707,7 +699,8 @@ describe('Post Controller(using ts-mockito)', () => {
   });
 });
 ```
-Now run the tests again. All tests should pass. 
+
+Now run the tests again. All tests should pass.
 
 ```bash
 > npm run test
@@ -725,7 +718,6 @@ Time:        11.481 s, estimated 12 s
 Ran all test suites.
 ```
 
-In this post, we connected to the real MongoDB instead of the dummy data storage, correspond to the changes , we have refactored all tests, and discuss some approaches to isolate the dependencies in tests.  But we have not test all functionalities in a real integrated environment,  Nestjs provides e2e testing skeleton, we will discuss it in a future post.
+In this post, we connected to the real MongoDB instead of the dummy data storage, correspond to the changes , we have refactored all tests, and discuss some approaches to isolate the dependencies in tests. But we have not test all functionalities in a real integrated environment, Nestjs provides e2e testing skeleton, we will discuss it in a future post.
 
 Grab [the source codes from my github](https://github.com/hantsy/nestjs-sample), switch to branch [feat/mongo](https://github.com/hantsy/nestjs-sample/blob/feat/mongo).
-
