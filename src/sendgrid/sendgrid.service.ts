@@ -5,12 +5,10 @@ import { Observable, from } from 'rxjs';
 
 @Injectable()
 export class SendgridService {
+  constructor(@Inject(SENDGRID_MAIL) private mailService: MailService) {}
 
-    constructor(@Inject(SENDGRID_MAIL) private mailService: MailService) { }
-
-    send(data: MailDataRequired): Observable<any>{
-        //console.log(this.mailService)
-        return from(this.mailService.send(data, false))
-    }
-
+  send(data: MailDataRequired): Observable<any> {
+    //console.log(this.mailService)
+    return from(this.mailService.send(data, false));
+  }
 }

@@ -98,7 +98,7 @@ describe('UserService', () => {
             username: 'hantsy',
             email: 'hantsy@example.com',
           } as User),
-        } as any),
+        }) as any,
     );
 
     const foundUser = await lastValueFrom(service.findByUsername('hantsy'));
@@ -112,15 +112,14 @@ describe('UserService', () => {
 
   describe('findById', () => {
     it('return one result', async () => {
-      jest.spyOn(model, 'findOne')
-      .mockImplementation(
+      jest.spyOn(model, 'findOne').mockImplementation(
         (filter?: FilterQuery<User>) =>
           ({
             exec: jest.fn().mockResolvedValue({
               username: 'hantsy',
               email: 'hantsy@example.com',
             } as User),
-          } as any),
+          }) as any,
       );
 
       const foundUser = await lastValueFrom(service.findById('hantsy'));
@@ -133,11 +132,12 @@ describe('UserService', () => {
     });
 
     it('return a null result', async () => {
-      jest
-        .spyOn(model, 'findOne')
-        .mockImplementation((filter?: FilterQuery<User>) => ({
-          exec: jest.fn().mockResolvedValue(null) as any,
-        } as any));
+      jest.spyOn(model, 'findOne').mockImplementation(
+        (filter?: FilterQuery<User>) =>
+          ({
+            exec: jest.fn().mockResolvedValue(null) as any,
+          }) as any,
+      );
 
       try {
         const foundUser = await lastValueFrom(service.findById('hantsy'));
@@ -147,15 +147,16 @@ describe('UserService', () => {
     });
 
     it('parameter withPosts=true', async () => {
-      jest
-        .spyOn(model, 'findOne')
-        .mockImplementation((filter?: FilterQuery<User>) => ({
-          populate: jest.fn().mockReturnThis(),
-          exec: jest.fn().mockResolvedValue({
-            username: 'hantsy',
-            email: 'hantsy@example.com',
-          } as User),
-        } as any));
+      jest.spyOn(model, 'findOne').mockImplementation(
+        (filter?: FilterQuery<User>) =>
+          ({
+            populate: jest.fn().mockReturnThis(),
+            exec: jest.fn().mockResolvedValue({
+              username: 'hantsy',
+              email: 'hantsy@example.com',
+            } as User),
+          }) as any,
+      );
 
       const foundUser = await lastValueFrom(service.findById('hantsy', true));
       expect(foundUser).toEqual({

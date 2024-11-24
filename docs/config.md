@@ -1,10 +1,10 @@
 # Externalizing the configuration
 
-Till now, all configurations in our application is working for the local development environment, but they are written in hard codes. 
+Till now, all configurations in our application is working for the local development environment, but they are written in hard codes.
 
-In the development and deployment stages of a real world application,  we have to consider a  flexible way to alter the configurations in the production environment without any code changes while the application is deployed continuously through a predefined delivery pipeline. 
+In the development and deployment stages of a real world application, we have to consider a flexible way to alter the configurations in the production environment without any code changes while the application is deployed continuously through a predefined delivery pipeline.
 
-Nestjs provides excellent configuration support, thus your application can read the configuration values from environment variables,  a *.env* file, etc. More info about the configuration, check  the [Configuration ](https://docs.nestjs.com/techniques/configuration) chapter from the Nestjs official docs.
+Nestjs provides excellent configuration support, thus your application can read the configuration values from environment variables, a _.env_ file, etc. More info about the configuration, check the [Configuration ](https://docs.nestjs.com/techniques/configuration) chapter from the Nestjs official docs.
 
 In this post, we will move our hard-coded configuration we've used in the previous posts to a central place and organize them with the NestJS configuration facilities.
 
@@ -16,10 +16,9 @@ First of all, install `@nestjs/config` package.
 npm install @nestjs/config
 ```
 
-Simply, import  `ConfigModule` in the top-level `AppModule`.
+Simply, import `ConfigModule` in the top-level `AppModule`.
 
 ```typescript
-
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
@@ -29,13 +28,13 @@ import { ConfigModule } from '@nestjs/config';
 export class AppModule {}
 ```
 
-It will register a `ConfigService`  for you to read configuration properties by calling its `get` method.
+It will register a `ConfigService` for you to read configuration properties by calling its `get` method.
 
 ```typescript
-configService.get<string>('MONGO_URI')
+configService.get<string>('MONGO_URI');
 ```
 
-Internally, Nestjs will scan `.env` file in the root folder. 
+Internally, Nestjs will scan `.env` file in the root folder.
 
 The following is a sample of the content of the `.env` file.
 
@@ -51,7 +50,7 @@ ConfigModule.forRoot({
 });
 ```
 
-For the container deployment or cloud deployment, setup configuration in a config server or as environment variables or  K8s *ConfigMap* is more popular. 
+For the container deployment or cloud deployment, setup configuration in a config server or as environment variables or K8s _ConfigMap_ is more popular.
 
 ## Externalizing application configurations
 
@@ -59,20 +58,18 @@ Personally, I prefer use a default hard-coded configuration in the development p
 
 Nestjs also support load custom configuration where it can read configurations from the environment variables freely.
 
-In the `AppModule`, disable  `.env` file support for `ConfigModule`.
+In the `AppModule`, disable `.env` file support for `ConfigModule`.
 
 ```typescript
 @Module({
-   imports:[
-    	ConfigModule.forRoot({ ignoreEnvFile: true }),
-	] 
+  imports: [ConfigModule.forRoot({ ignoreEnvFile: true })],
 })
-export class AppModule{}
+export class AppModule {}
 ```
 
-Then create a *config* folder to organize all configurations in this application.
+Then create a _config_ folder to organize all configurations in this application.
 
-In the config folder, add a new configuration for *Mongo* database.
+In the config folder, add a new configuration for _Mongo_ database.
 
 ```typescript
 //config/mongodb.config.ts
@@ -84,19 +81,19 @@ export default registerAs('mongodb', () => ({
 }));
 ```
 
-Here we use `registerAs`  to group the configurations related to the context *mongodb*.
+Here we use `registerAs` to group the configurations related to the context _mongodb_.
 
-In the `DatabaseModule`, load the *mongodb* configuration.
+In the `DatabaseModule`, load the _mongodb_ configuration.
 
 ```typescript
 import { databaseConnectionProviders } from './database-connection.providers';
 
 @Module({
   imports: [ConfigModule.forFeature(mongodbConfig)],
-  providers: [...databaseConnectionProviders,],
-  exports: [...databaseConnectionProviders, ],
+  providers: [...databaseConnectionProviders],
+  exports: [...databaseConnectionProviders],
 })
-export class DatabaseModule { }
+export class DatabaseModule {}
 ```
 
 > You can also use Nestjs ConfigModule to load the configuration globally, but here we do not want to expose the mongodb config to other modules.
@@ -117,14 +114,14 @@ export const databaseConnectionProviders = [
         useNewUrlParser: true,
         useUnifiedTopology: true,
         //see: https://mongoosejs.com/docs/deprecations.html#findandmodify
-        useFindAndModify: false
+        useFindAndModify: false,
       }),
     inject: [mongodbConfig.KEY],
-  }
+  },
 ];
 ```
 
-In the above codes, provide a  token  `mongodbConfig.KEY`, you can inject a config instance as type `ConfigType<typeof mongodbConfig>`  in the factory method, then you can read the configuration in a **type safe** way via `dbConfig.uri`.
+In the above codes, provide a token `mongodbConfig.KEY`, you can inject a config instance as type `ConfigType<typeof mongodbConfig>` in the factory method, then you can read the configuration in a **type safe** way via `dbConfig.uri`.
 
 Similarly, create a configuration for the JWT authentication, move the existing JWT options into this configuration file.
 
@@ -136,7 +133,6 @@ export default registerAs('jwt', () => ({
   secretKey: process.env.JWT_SECRET_KEY || 'rzxlszyykpbgqcflzxsqcysyhljt',
   expiresIn: process.env.JWT_EXPIRES_IN || '3600s',
 }));
-
 ```
 
 In the `AuthModule`, apply the configuration like this.
@@ -165,7 +161,7 @@ import jwtConfig from '../config/jwt.config';
 export class AuthModule {}
 ```
 
-And open *jwt.stretagy.ts* file, change the value of **secretOrKey** to read from `jwtConfig`.
+And open _jwt.stretagy.ts_ file, change the value of **secretOrKey** to read from `jwtConfig`.
 
 ```typescript
 import jwtConfig from '../../config/jwt.config';
@@ -196,7 +192,7 @@ Or set it in the docker-compose file like this.
 ```typescript
 version: '3.8' # specify docker-compose version
 services:
-  //...  
+  //...
   api:
     environment:
       - "MONGODB_URI=mongodb://mongodb:27017/blog"
@@ -204,8 +200,6 @@ services:
 ```
 
 We will start a new topic of deployment in the further posts.
-
-
 
 ## Testing configurations
 
@@ -238,6 +232,3 @@ describe('jwtConfig', () => {
 ```
 
 Grab [the source codes from my github](https://github.com/hantsy/nestjs-sample), switch to branch [feat/config](https://github.com/hantsy/nestjs-sample/blob/feat/config).
-
-
-

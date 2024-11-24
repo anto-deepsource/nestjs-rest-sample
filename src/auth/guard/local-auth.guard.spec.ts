@@ -17,5 +17,4 @@ describe('LocalAuthGuard', () => {
     AuthGuard('local').prototype.logIn = jest.fn(() => Promise.resolve());
     expect(await guard.canActivate({} as ExecutionContext)).toBe(true);
   });
-
 });

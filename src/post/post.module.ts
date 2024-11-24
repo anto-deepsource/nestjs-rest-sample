@@ -9,7 +9,7 @@ import { PostService } from './post.service';
   controllers: [PostController],
   providers: [PostService, PostDataInitializerService],
 })
-export class PostModule{}
+export class PostModule {}
 //  implements NestModule {
 //   configure(consumer: MiddlewareConsumer): MiddlewareConsumer | void {
 //     consumer

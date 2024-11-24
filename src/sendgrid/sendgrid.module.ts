@@ -7,6 +7,6 @@ import sendgridConfig from '../config/sendgrid.config';
 @Module({
   imports: [ConfigModule.forFeature(sendgridConfig)],
   providers: [...sendgridProviders, SendgridService],
-  exports: [...sendgridProviders, SendgridService]
+  exports: [...sendgridProviders, SendgridService],
 })
-export class SendgridModule { }
+export class SendgridModule {}

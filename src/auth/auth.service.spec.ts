@@ -51,7 +51,7 @@ describe('AuthService', () => {
             password: 'password',
             email: 'hantsy@example.com',
             roles: [RoleType.USER],
-            comparePassword: (password: string) => of(true)
+            comparePassword: (password: string) => of(true),
           } as User);
         });
 
@@ -78,16 +78,14 @@ describe('AuthService', () => {
             password: 'password',
             email: 'hantsy@example.com',
             roles: [RoleType.USER],
-            comparePassword: (password: string) => of(false)
+            comparePassword: (password: string) => of(false),
           } as User);
         });
 
-      service
-        .validateUser('test', 'password001')
-        .subscribe({
-          next: (data) => console.log(data),
-          error: error => expect(error).toBeDefined()
-        });
+      service.validateUser('test', 'password001').subscribe({
+        next: (data) => console.log(data),
+        error: (error) => expect(error).toBeDefined(),
+      });
     });
 
     it('if user is not found', async () => {
@@ -97,13 +95,10 @@ describe('AuthService', () => {
           return of(null as User);
         });
 
-
-      service
-        .validateUser('test', 'password001')
-        .subscribe({
-          next: (data) => console.log(data),
-          error: error => expect(error).toBeDefined()
-        });
+      service.validateUser('test', 'password001').subscribe({
+        next: (data) => console.log(data),
+        error: (error) => expect(error).toBeDefined(),
+      });
     });
   });
 
